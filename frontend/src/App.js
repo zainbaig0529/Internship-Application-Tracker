@@ -32,6 +32,19 @@ function App() {
     fetchApplications();
   };
 
+  const deleteApplication = async (id) => {
+    await axios.delete(`http://127.0.0.1:5000/applications/${id}`);
+    fetchApplications();
+  };
+
+  const updateStatus = async (id, status) => {
+    await axios.put(`http://127.0.0.1:5000/applications/${id}`, {
+      status: status,
+    });
+
+    fetchApplications();
+  };
+
   return (
     <div style={{ padding: "30px", maxWidth: "700px", margin: "0 auto" }}>
       <h1>Internship Application Tracker</h1>
@@ -84,13 +97,38 @@ function App() {
               marginBottom: "12px",
             }}
           >
-            <h3 style={{ margin: "0 0 8px 0" }}>{app.company}</h3>
-            <p style={{ margin: "4px 0" }}>
+            <h3>{app.company}</h3>
+
+            <p>
               <strong>Position:</strong> {app.position}
             </p>
-            <p style={{ margin: "4px 0" }}>
-              <strong>Status:</strong> {app.status}
-            </p>
+
+            <select
+              value={app.status}
+              onChange={(e) => updateStatus(app.id, e.target.value)}
+            >
+              <option value="Applied">Applied</option>
+              <option value="Interview">Interview</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Offer">Offer</option>
+            </select>
+
+            <br />
+
+            <button
+              onClick={() => deleteApplication(app.id)}
+              style={{
+                marginTop: "10px",
+                background: "#ff4d4d",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Delete
+            </button>
           </div>
         ))
       )}
