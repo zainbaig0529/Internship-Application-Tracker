@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 
 function App() {
@@ -8,6 +8,8 @@ function App() {
     position: "",
     status: "Applied",
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const fetchApplications = async () => {
     const res = await axios.get("http://127.0.0.1:5000/applications");
@@ -41,12 +43,34 @@ function App() {
     await axios.put(`http://127.0.0.1:5000/applications/${id}`, {
       status: status,
     });
-
     fetchApplications();
   };
 
+  const stats = useMemo(() => {
+    return {
+      total: applications.length,
+      applied: applications.filter((app) => app.status === "Applied").length,
+      interview: applications.filter((app) => app.status === "Interview").length,
+      rejected: applications.filter((app) => app.status === "Rejected").length,
+      offer: applications.filter((app) => app.status === "Offer").length,
+    };
+  }, [applications]);
+
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const matchesSearch =
+        app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.position.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "All" || app.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [applications, searchTerm, statusFilter]);
+
   return (
-    <div style={{ padding: "30px", maxWidth: "700px", margin: "0 auto" }}>
+    <div style={{ padding: "30px", maxWidth: "900px", margin: "0 auto" }}>
       <h1>Internship Application Tracker</h1>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: "24px" }}>
@@ -82,12 +106,73 @@ function App() {
         </button>
       </form>
 
+      <h2>Dashboard</h2>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+          gap: "12px",
+          marginBottom: "24px",
+        }}
+      >
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Total</h3>
+          <p style={cardNumberStyle}>{stats.total}</p>
+        </div>
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Applied</h3>
+          <p style={cardNumberStyle}>{stats.applied}</p>
+        </div>
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Interview</h3>
+          <p style={cardNumberStyle}>{stats.interview}</p>
+        </div>
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Rejected</h3>
+          <p style={cardNumberStyle}>{stats.rejected}</p>
+        </div>
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Offer</h3>
+          <p style={cardNumberStyle}>{stats.offer}</p>
+        </div>
+      </div>
+
+      <h2>Search & Filter</h2>
+
+      <div style={{ marginBottom: "24px" }}>
+        <input
+          type="text"
+          placeholder="Search by company or position"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            marginRight: "10px",
+            marginBottom: "10px",
+            padding: "8px",
+            width: "260px",
+          }}
+        />
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{ padding: "8px" }}
+        >
+          <option value="All">All Statuses</option>
+          <option value="Applied">Applied</option>
+          <option value="Interview">Interview</option>
+          <option value="Rejected">Rejected</option>
+          <option value="Offer">Offer</option>
+        </select>
+      </div>
+
       <h2>Applications</h2>
 
-      {applications.length === 0 ? (
-        <p>No applications yet.</p>
+      {filteredApplications.length === 0 ? (
+        <p>No matching applications found.</p>
       ) : (
-        applications.map((app) => (
+        filteredApplications.map((app) => (
           <div
             key={app.id}
             style={{
@@ -103,9 +188,14 @@ function App() {
               <strong>Position:</strong> {app.position}
             </p>
 
+            <p>
+              <strong>Status:</strong>
+            </p>
+
             <select
               value={app.status}
               onChange={(e) => updateStatus(app.id, e.target.value)}
+              style={{ marginBottom: "10px", padding: "6px" }}
             >
               <option value="Applied">Applied</option>
               <option value="Interview">Interview</option>
@@ -118,7 +208,7 @@ function App() {
             <button
               onClick={() => deleteApplication(app.id)}
               style={{
-                marginTop: "10px",
+                marginTop: "8px",
                 background: "#ff4d4d",
                 color: "white",
                 border: "none",
@@ -135,5 +225,24 @@ function App() {
     </div>
   );
 }
+
+const cardStyle = {
+  border: "1px solid #ddd",
+  borderRadius: "10px",
+  padding: "16px",
+  textAlign: "center",
+  backgroundColor: "#f8f8f8",
+};
+
+const cardTitleStyle = {
+  margin: "0 0 8px 0",
+  fontSize: "16px",
+};
+
+const cardNumberStyle = {
+  margin: 0,
+  fontSize: "24px",
+  fontWeight: "bold",
+};
 
 export default App;
