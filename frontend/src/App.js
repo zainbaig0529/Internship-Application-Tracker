@@ -7,6 +7,7 @@ function App() {
     company: "",
     position: "",
     status: "Applied",
+    deadline: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -29,6 +30,7 @@ function App() {
       company: "",
       position: "",
       status: "Applied",
+      deadline: "",
     });
 
     fetchApplications();
@@ -46,6 +48,21 @@ function App() {
     fetchApplications();
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Applied":
+        return "#6b7280";
+      case "Interview":
+        return "#2563eb";
+      case "Offer":
+        return "#16a34a";
+      case "Rejected":
+        return "#dc2626";
+      default:
+        return "#111827";
+    }
+  };
+
   const stats = useMemo(() => {
     return {
       total: applications.length,
@@ -58,9 +75,12 @@ function App() {
 
   const filteredApplications = useMemo(() => {
     return applications.filter((app) => {
+      const company = app.company || "";
+      const position = app.position || "";
+
       const matchesSearch =
-        app.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.position.toLowerCase().includes(searchTerm.toLowerCase());
+        company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        position.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "All" || app.status === statusFilter;
@@ -100,6 +120,13 @@ function App() {
           <option value="Rejected">Rejected</option>
           <option value="Offer">Offer</option>
         </select>
+
+        <input
+          type="date"
+          value={form.deadline}
+          onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+          style={{ marginRight: "10px", marginBottom: "10px", padding: "8px" }}
+        />
 
         <button type="submit" style={{ padding: "8px 14px" }}>
           Add Application
@@ -189,7 +216,11 @@ function App() {
             </p>
 
             <p>
-              <strong>Status:</strong>
+              <strong>Deadline:</strong> {app.deadline || "N/A"}
+            </p>
+
+            <p style={{ color: getStatusColor(app.status), fontWeight: "bold" }}>
+              <strong>Status:</strong> {app.status}
             </p>
 
             <select
