@@ -21,7 +21,8 @@ def get_applications():
             "id": app.id,
             "company": app.company,
             "position": app.position,
-            "status": app.status
+            "status": app.status,
+            "deadline": app.deadline
         }
         for app in apps
     ])
@@ -33,13 +34,40 @@ def add_application():
     new_app = Application(
         company=data["company"],
         position=data["position"],
-        status=data.get("status", "Applied")
+        status=data.get("status", "Applied"),
+        deadline=data.get("deadline", "")
     )
 
     db.session.add(new_app)
     db.session.commit()
 
     return jsonify({"message": "Application added successfully"}), 201
+
+@app.route("/applications/<int:id>", methods=["DELETE"])
+def delete_application(id):
+    app = Application.query.get(id)
+
+    if not app:
+        return jsonify({"error": "Application not found"}), 404
+
+    db.session.delete(app)
+    db.session.commit()
+
+    return jsonify({"message": "Application deleted"})
+
+@app.route("/applications/<int:id>", methods=["PUT"])
+def update_application(id):
+    data = request.get_json()
+
+    app = Application.query.get(id)
+
+    if not app:
+        return jsonify({"error": "Application not found"}), 404
+
+    app.status = data.get("status", app.status)
+    db.session.commit()
+
+    return jsonify({"message": "Application updated"})
 
 if __name__ == "__main__":
     app.run(debug=True)
